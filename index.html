@@ -538,7 +538,7 @@ footer a { color: inherit; }
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="qrcode.js"></script>
 <script>
 (function () {
   "use strict";
@@ -929,7 +929,7 @@ footer a { color: inherit; }
 
   if (typeof qrcode === "undefined") {
     $("qr-empty").hidden = false;
-    $("qr-empty").innerHTML = "<div><strong>QR engine didn't load</strong>Check your internet connection and reload the page.</div>";
+    $("qr-empty").innerHTML = "<div><strong>QR engine didn't load</strong>Make sure qrcode.js sits in the same folder as this page, then reload.</div>";
     return;
   }
 

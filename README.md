@@ -25,4 +25,4 @@ Open `index.html` in a browser. That's it.
 
 These are **static** QR codes: the link is stored inside the image itself. They never expire and need no server, but you can't change the destination after printing. If you need that, you need a "dynamic" QR (a short link on your own server that redirects).
 
-The QR encoding uses [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT), loaded from jsDelivr.
+The QR encoding uses [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT), bundled as `qrcode.js`, so the page works offline. Keep `qrcode.js` next to `index.html`.
