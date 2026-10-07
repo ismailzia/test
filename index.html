@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiet Zone QR</title>
+<meta name="description" content="Paste a link and get a QR code. Runs entirely in your browser — nothing is sent to a server.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%232440E6'/%3E%3Cpath fill='%23fff' d='M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM9 9h2v2H9zM11 11h2v2h-2z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: controls on the left, a sticky "print proof" on a cutting-mat grid on the right; stacks input → proof → style on phones. */
+:root {
+  --mat: #E6E9E4;
+  --mat-line: rgba(30, 50, 40, .07);
+  --surface: #FFFFFF;
+  --ink: #141816;
+  --muted: #5B645E;
+  --line: #CDD3CC;
+  --accent: #2440E6;
+  --accent-ink: #FFFFFF;
+  --accent-soft: rgba(36, 64, 230, .10);
+  --warn: #9A5A00;
+  --warn-soft: #FFF3DC;
+  --ok: #1E7A45;
+  --shadow: 0 1px 0 rgba(20, 24, 22, .04), 0 12px 32px -12px rgba(20, 24, 22, .22);
+
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --mat: #111412;
+    --mat-line: rgba(200, 220, 210, .05);
+    --surface: #1A1E1C;
+    --ink: #E6EAE6;
+    --muted: #97A19A;
+    --line: #2D3330;
+    --accent: #8C9DFF;
+    --accent-ink: #0D1240;
+    --accent-soft: rgba(140, 157, 255, .14);
+    --warn: #F2B866;
+    --warn-soft: rgba(242, 184, 102, .12);
+    --ok: #6FD39A;
+    --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 16px 40px -16px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --mat: #111412;
+  --mat-line: rgba(200, 220, 210, .05);
+  --surface: #1A1E1C;
+  --ink: #E6EAE6;
+  --muted: #97A19A;
+  --line: #2D3330;
+  --accent: #8C9DFF;
+  --accent-ink: #0D1240;
+  --accent-soft: rgba(140, 157, 255, .14);
+  --warn: #F2B866;
+  --warn-soft: rgba(242, 184, 102, .12);
+  --ok: #6FD39A;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 16px 40px -16px rgba(0, 0, 0, .7);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background-color: var(--mat);
+  background-image:
+    linear-gradient(var(--mat-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mat-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font: 400 15px/1.55 var(--font-body);
+  padding-inline: max(16px, env(safe-area-inset-left, 0px));
+  padding-block: 0 48px;
+  min-height: 100vh;
+}
+[hidden] { display: none !important; }
+img, svg { max-width: 100%; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.wrap { max-width: 1080px; margin: 0 auto; }
+
+/* Header */
+.masthead {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding-block: 40px 28px;
+}
+.brand { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.brand h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 850;
+  font-size: clamp(30px, 6vw, 52px);
+  line-height: .95;
+  letter-spacing: -.02em;
+  text-wrap: balance;
+}
+.brand h1 .mark {
+  display: inline-block; width: .62em; height: .62em; margin-right: .18em;
+  background: var(--accent); border-radius: .08em; vertical-align: .02em;
+  box-shadow: inset 0 0 0 .1em var(--accent), inset 0 0 0 .2em var(--mat);
+}
+.brand p { margin: 0; color: var(--muted); max-width: 52ch; }
+.local-badge {
+  font: 500 12px/1 var(--font-mono);
+  color: var(--ok);
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+}
+.local-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+/* Grid */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  grid-template-areas: "content proof" "style proof";
+  gap: 20px 28px;
+  align-items: start;
+}
+.panel-content { grid-area: content; }
+.panel-style { grid-area: style; }
+.proof { grid-area: proof; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "content" "proof" "style"; }
+  .proof { position: static; }
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 18px;
+  min-width: 0;
+}
+.panel-title {
+  margin: 0;
+  font: 700 12px/1 var(--font-body);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+}
+
+/* Tabs */
+.tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; background: var(--mat); border-radius: var(--r-sm); }
+.tab {
+  flex: 1 1 auto;
+  border: 0; background: transparent; cursor: pointer;
+  padding: 9px 4px; border-radius: 4px; white-space: nowrap;
+  font-weight: 600; font-size: 14px; color: var(--muted);
+  transition: background .15s, color .15s;
+}
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+
+/* Fields */
+.fields { display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+label, .label { font-weight: 600; font-size: 13px; }
+.hint { font-size: 13px; color: var(--muted); }
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--surface);
+  font-size: 16px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.input:hover { border-color: color-mix(in srgb, var(--line) 50%, var(--ink)); }
+.input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.input.big { font-size: 18px; padding: 14px 16px; }
+.input-affix { position: relative; display: flex; align-items: stretch; }
+.input-affix .affix {
+  display: flex; align-items: center; padding: 0 12px;
+  border: 1px solid var(--line); border-right: 0; border-radius: var(--r-sm) 0 0 var(--r-sm);
+  background: var(--mat); color: var(--muted); font: 500 14px var(--font-mono); white-space: nowrap;
+}
+.input-affix .input { border-radius: 0 var(--r-sm) var(--r-sm) 0; min-width: 0; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.encoded {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 12px 14px; border-radius: var(--r-sm);
+  background: var(--mat);
+  min-width: 0;
+}
+.encoded .label { font: 600 11px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.encoded code {
+  font: 400 13px/1.5 var(--font-mono);
+  overflow-wrap: anywhere; word-break: break-word;
+  color: var(--ink);
+}
+
+/* Segmented controls */
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button {
+  flex: 1 1 0; min-width: 64px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 9px 8px; cursor: pointer;
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface);
+  font-size: 14px; font-weight: 600;
+  transition: border-color .15s, background .15s;
+}
+.seg button small { font: 400 11px/1.2 var(--font-mono); color: var(--muted); }
+.seg button:hover { border-color: color-mix(in srgb, var(--line) 40%, var(--ink)); }
+.seg button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.seg .glyph { width: 22px; height: 22px; display: block; }
+.seg .glyph rect, .seg .glyph circle { fill: currentColor; }
+
+/* Colors */
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.swatch {
+  width: 34px; height: 34px; border-radius: 50%; cursor: pointer; padding: 0;
+  border: 1px solid var(--line);
+  box-shadow: inset 0 0 0 3px var(--surface);
+}
+.swatch[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 3px var(--surface), 0 0 0 2px var(--accent); }
+.color-custom {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 4px 10px 4px 4px; border: 1px solid var(--line); border-radius: 999px;
+  font: 500 12px var(--font-mono); color: var(--muted); cursor: pointer;
+}
+.color-custom input[type="color"] {
+  width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer;
+}
+.color-custom input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.color-custom input[type="color"]::-webkit-color-swatch { border: 1px solid var(--line); border-radius: 50%; }
+.color-custom input[type="color"]::-moz-color-swatch { border: 1px solid var(--line); border-radius: 50%; }
+
+.notice {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 12px; border-radius: var(--r-sm);
+  background: var(--warn-soft); color: var(--warn);
+  font-size: 13px; font-weight: 500;
+}
+.notice::before { content: "!"; flex: none; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: var(--warn); color: var(--surface); font: 700 12px/1 var(--font-body); margin-top: 1px; }
+
+/* Proof (preview) */
+.proof-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.proof-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px dashed var(--line);
+  font: 500 11px/1 var(--font-mono); letter-spacing: .04em; color: var(--muted); text-transform: uppercase;
+}
+.proof-stage {
+  position: relative;
+  padding: 28px 28px 20px 40px;
+  background:
+    linear-gradient(var(--mat-line) 1px, transparent 1px) 0 0 / 12px 12px,
+    linear-gradient(90deg, var(--mat-line) 1px, transparent 1px) 0 0 / 12px 12px,
+    var(--surface);
+}
+/* rulers */
+.ruler-x, .ruler-y { position: absolute; color: var(--muted); font: 500 10px/1 var(--font-mono); }
+.ruler-x { left: 40px; right: 28px; top: 10px; height: 10px; border-left: 1px solid currentColor; border-right: 1px solid currentColor; }
+.ruler-x::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid currentColor; opacity: .5; }
+.ruler-x span { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--surface); padding: 0 6px; white-space: nowrap; }
+.ruler-y { top: 28px; left: 14px; width: 10px; border-top: 1px solid currentColor; border-bottom: 1px solid currentColor; }
+.ruler-y::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; border-left: 1px solid currentColor; opacity: .5; }
+
+.qr-frame {
+  position: relative;
+  aspect-ratio: 1 / 1; width: 100%; max-width: 100%;
+  outline: 1px dashed color-mix(in srgb, var(--muted) 55%, transparent);
+  outline-offset: 6px;
+  border-radius: 2px;
+}
+.qr-frame svg, .qr-frame img { display: block; width: 100%; height: 100%; }
+.qr-frame img { image-rendering: pixelated; -webkit-touch-callout: default; }
+.qr-frame.is-fresh { animation: pop .28s ease-out; }
+@keyframes pop { from { transform: scale(.985); opacity: .6; } to { transform: none; opacity: 1; } }
+@media (max-width: 380px) { .tab { font-size: 13px; } }
+@media (prefers-reduced-motion: reduce) { .qr-frame.is-fresh { animation: none; } * { transition: none !important; } }
+
+.qr-empty {
+  position: absolute; inset: 0;
+  display: grid; place-items: center; text-align: center; padding: 24px;
+  background: var(--surface); color: var(--muted); font-size: 14px;
+  border: 1px dashed var(--line); border-radius: 2px;
+}
+.qr-empty strong { display: block; color: var(--ink); font-size: 15px; margin-bottom: 4px; }
+
+.specs {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px dashed var(--line);
+}
+.spec { padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.spec + .spec { border-left: 1px dashed var(--line); }
+.spec dt { font: 600 10px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.spec dd { margin: 0; font: 500 14px/1.2 var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.actions { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-top: 1px solid var(--line); }
+.actions-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  flex: 1 1 auto;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 16px; border-radius: var(--r-sm); cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface);
+  font-weight: 650; font-size: 14px; text-decoration: none; color: var(--ink);
+  transition: background .15s, border-color .15s, transform .1s;
+}
+.btn:hover { border-color: color-mix(in srgb, var(--line) 40%, var(--ink)); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { background: color-mix(in srgb, var(--accent) 88%, var(--ink)); border-color: transparent; }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.size-pick { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.size-pick select {
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface);
+  font: 500 13px var(--font-mono);
+}
+.save-hint { font-size: 12px; color: var(--muted); margin: 0; }
+
+.print-tip {
+  margin-top: 14px; padding: 12px 14px;
+  font-size: 13px; color: var(--muted);
+  border-left: 2px solid var(--line);
+}
+.print-tip b { color: var(--ink); font-weight: 600; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 16px); opacity: 0; pointer-events: none;
+  background: var(--ink); color: var(--surface);
+  padding: 10px 16px; border-radius: 999px; font-weight: 600; font-size: 14px;
+  transition: opacity .2s, transform .2s;
+  max-width: calc(100% - 32px); text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+footer { margin-top: 36px; color: var(--muted); font-size: 13px; }
+footer a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <div class="brand">
+      <h1><span class="mark" aria-hidden="true"></span>Quiet Zone</h1>
+      <p>Paste a link and get a QR code you can print, post, or share. Anyone who scans it goes straight to your link.</p>
+    </div>
+    <span class="local-badge" title="The code is drawn by your browser. Nothing you type leaves this page.">Made in your browser · nothing uploaded</span>
+  </header>
+
+  <main class="layout">
+    <!-- What the code points to -->
+    <section class="panel panel-content" aria-labelledby="content-title">
+      <h2 class="panel-title" id="content-title">Where should it go?</h2>
+
+      <div class="tabs" role="tablist" aria-label="Type of QR code">
+        <button class="tab" role="tab" id="tab-link" aria-controls="pane-link" aria-selected="true" data-kind="link">Link</button>
+        <button class="tab" role="tab" id="tab-instagram" aria-controls="pane-instagram" aria-selected="false" data-kind="instagram">Instagram</button>
+        <button class="tab" role="tab" id="tab-whatsapp" aria-controls="pane-whatsapp" aria-selected="false" data-kind="whatsapp">WhatsApp</button>
+        <button class="tab" role="tab" id="tab-wifi" aria-controls="pane-wifi" aria-selected="false" data-kind="wifi">Wi‑Fi</button>
+      </div>
+
+      <div class="fields" id="pane-link" role="tabpanel" aria-labelledby="tab-link">
+        <div class="field">
+          <label for="in-link">Website or link</label>
+          <input class="input big" id="in-link" type="text" inputmode="url" autocomplete="url" spellcheck="false" placeholder="yourwebsite.com" value="https://github.com/ismailzia">
+          <span class="hint">Any web address works: your site, a menu, a form, a YouTube video, a Google Maps pin.</span>
+        </div>
+      </div>
+
+      <div class="fields" id="pane-instagram" role="tabpanel" aria-labelledby="tab-instagram" hidden>
+        <div class="field">
+          <label for="in-ig">Instagram username</label>
+          <div class="input-affix">
+            <span class="affix">instagram.com/</span>
+            <input class="input big" id="in-ig" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="username">
+          </div>
+          <span class="hint">Opens your profile in the Instagram app when it's installed. You can also paste a full profile link.</span>
+        </div>
+      </div>
+
+      <div class="fields" id="pane-whatsapp" role="tabpanel" aria-labelledby="tab-whatsapp" hidden>
+        <div class="field">
+          <label for="in-wa-phone">Phone number with country code</label>
+          <input class="input big" id="in-wa-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+212 6 12 34 56 78">
+        </div>
+        <div class="field">
+          <label for="in-wa-msg">Message they'll start with <span class="hint">(optional)</span></label>
+          <input class="input" id="in-wa-msg" type="text" placeholder="Hi! I saw your QR code and…">
+        </div>
+      </div>
+
+      <div class="fields" id="pane-wifi" role="tabpanel" aria-labelledby="tab-wifi" hidden>
+        <div class="field-row">
+          <div class="field">
+            <label for="in-wifi-ssid">Network name</label>
+            <input class="input" id="in-wifi-ssid" type="text" autocomplete="off" spellcheck="false" placeholder="Cafe_Guest">
+          </div>
+          <div class="field">
+            <label for="in-wifi-pass">Password</label>
+            <input class="input" id="in-wifi-pass" type="text" autocomplete="off" spellcheck="false" placeholder="••••••••">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="in-wifi-sec">Security</label>
+            <select class="input" id="in-wifi-sec">
+              <option value="WPA">WPA / WPA2 / WPA3</option>
+              <option value="WEP">WEP</option>
+              <option value="nopass">None (open network)</option>
+            </select>
+          </div>
+          <div class="field" style="justify-content:flex-end">
+            <label class="check"><input type="checkbox" id="in-wifi-hidden"> Hidden network</label>
+          </div>
+        </div>
+        <span class="hint">Guests point their camera at the code and join without typing the password.</span>
+      </div>
+
+      <div class="encoded" aria-live="polite">
+        <span class="label">Inside the code</span>
+        <code id="encoded-text">—</code>
+      </div>
+    </section>
+
+    <!-- Proof -->
+    <aside class="proof" aria-label="Your QR code">
+      <div class="proof-card">
+        <div class="proof-head">
+          <span id="proof-kind">Link</span>
+          <span id="proof-version">Version —</span>
+        </div>
+        <div class="proof-stage">
+          <div class="ruler-x"><span id="ruler-label">— modules</span></div>
+          <div class="ruler-y" id="ruler-y"></div>
+          <div class="qr-frame" id="qr-frame">
+            <img id="qr-img" alt="QR code" draggable="true">
+            <div class="qr-empty" id="qr-empty" hidden>
+              <div><strong>Your code appears here</strong>Type a link on the left to make it.</div>
+            </div>
+          </div>
+        </div>
+        <dl class="specs">
+          <div class="spec"><dt>Grid</dt><dd id="spec-grid">—</dd></div>
+          <div class="spec"><dt>Repair</dt><dd id="spec-ecc">—</dd></div>
+          <div class="spec"><dt>Min. print</dt><dd id="spec-print">—</dd></div>
+        </dl>
+        <div class="actions">
+          <div class="actions-row">
+            <button class="btn btn-primary" id="btn-png" type="button">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 13h10"/></svg>
+              Download PNG
+            </button>
+            <button class="btn" id="btn-svg" type="button">SVG</button>
+            <button class="btn" id="btn-copy" type="button">Copy image</button>
+          </div>
+          <div class="actions-row" style="justify-content:space-between;align-items:center">
+            <label class="size-pick" for="sel-size">PNG size
+              <select id="sel-size">
+                <option value="512">512 px</option>
+                <option value="1024" selected>1024 px</option>
+                <option value="2048">2048 px</option>
+                <option value="4096">4096 px</option>
+              </select>
+            </label>
+            <a class="btn" id="btn-test" href="#" target="_blank" rel="noopener" style="flex:0 0 auto">Open link ↗</a>
+          </div>
+          <p class="save-hint">Download blocked? Right‑click the code (or long‑press on a phone) and choose “Save image”.</p>
+        </div>
+      </div>
+      <p class="print-tip"><b>Print rule of thumb:</b> make the code at least one‑tenth of the scanning distance. A table card read from 30 cm needs 3 cm; a poster read from 2 m needs 20 cm.</p>
+    </aside>
+
+    <!-- Look -->
+    <section class="panel panel-style" aria-labelledby="style-title">
+      <h2 class="panel-title" id="style-title">Look</h2>
+
+      <div class="field">
+        <span class="label" id="lbl-shape">Dot shape</span>
+        <div class="seg" role="group" aria-labelledby="lbl-shape" id="seg-shape">
+          <button type="button" data-v="square" aria-pressed="true">
+            <svg class="glyph" viewBox="0 0 3 3" aria-hidden="true"><rect x="0" y="0" width="1" height="1"/><rect x="1" y="0" width="1" height="1"/><rect x="2" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="1"/><rect x="1" y="2" width="1" height="1"/></svg>
+            Square
+          </button>
+          <button type="button" data-v="rounded" aria-pressed="false">
+            <svg class="glyph" viewBox="0 0 3 3" aria-hidden="true"><rect x=".08" y=".08" width=".84" height=".84" rx=".3"/><rect x="1.08" y=".08" width=".84" height=".84" rx=".3"/><rect x="2.08" y="1.08" width=".84" height=".84" rx=".3"/><rect x=".08" y="2.08" width=".84" height=".84" rx=".3"/><rect x="1.08" y="2.08" width=".84" height=".84" rx=".3"/></svg>
+            Soft
+          </button>
+          <button type="button" data-v="dots" aria-pressed="false">
+            <svg class="glyph" viewBox="0 0 3 3" aria-hidden="true"><circle cx=".5" cy=".5" r=".42"/><circle cx="1.5" cy=".5" r=".42"/><circle cx="2.5" cy="1.5" r=".42"/><circle cx=".5" cy="2.5" r=".42"/><circle cx="1.5" cy="2.5" r=".42"/></svg>
+            Dots
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="label" id="lbl-fg">Code color</span>
+        <div class="swatches" role="group" aria-labelledby="lbl-fg" id="sw-fg"></div>
+      </div>
+
+      <div class="field">
+        <span class="label" id="lbl-bg">Background</span>
+        <div class="swatches" role="group" aria-labelledby="lbl-bg" id="sw-bg"></div>
+      </div>
+
+      <div class="notice" id="contrast-warn" hidden></div>
+
+      <div class="field">
+        <span class="label" id="lbl-ecc">Damage tolerance</span>
+        <div class="seg" role="group" aria-labelledby="lbl-ecc" id="seg-ecc">
+          <button type="button" data-v="L" aria-pressed="false">Low<small>7%</small></button>
+          <button type="button" data-v="M" aria-pressed="true">Standard<small>15%</small></button>
+          <button type="button" data-v="Q" aria-pressed="false">High<small>25%</small></button>
+          <button type="button" data-v="H" aria-pressed="false">Max<small>30%</small></button>
+        </div>
+        <span class="hint">How much of the code can be scratched, folded or covered and still scan. Higher means more dots, so print it a little bigger.</span>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Static QR codes never expire and work offline. To change where a printed code goes later, you'd need a redirect link (a “dynamic” QR) instead.
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var QUIET = 4; // quiet zone, in modules (the QR spec asks for 4)
+  var ECC_LABEL = { L: "7%", M: "15%", Q: "25%", H: "30%" };
+  var KIND_LABEL = { link: "Link", instagram: "Instagram", whatsapp: "WhatsApp", wifi: "Wi‑Fi" };
+
+  var FG = ["#111111", "#2440E6", "#0B6E4F", "#B3261E", "#6B2FB3", "#7A4A12"];
+  var BG = ["#FFFFFF", "#F6F1E7", "#E9F2FF", "#FFF4D6", "#EAF6EE"];
+
+  var state = {
+    kind: "link",
+    shape: "square",
+    ecc: "M",
+    fg: FG[0],
+    bg: BG[0],
+    size: 1024
+  };
+
+  var store = {
+    get: function () { try { return JSON.parse(localStorage.getItem("qz-style") || "null"); } catch (e) { return null; } },
+    set: function (v) { try { localStorage.setItem("qz-style", JSON.stringify(v)); } catch (e) {} }
+  };
+  var saved = store.get();
+  if (saved && typeof saved === "object") {
+    ["shape", "ecc", "fg", "bg", "size"].forEach(function (k) { if (saved[k] != null) state[k] = saved[k]; });
+  }
+  function persist() { store.set({ shape: state.shape, ecc: state.ecc, fg: state.fg, bg: state.bg, size: state.size }); }
+
+  /* ---------- What goes inside the code ---------- */
+
+  function normalizeUrl(s) {
+    s = s.trim();
+    if (!s) return "";
+    if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return s;          // already has a scheme
+    if (/^[^\s]+\.[^\s]{2,}/.test(s)) return "https://" + s; // looks like a domain
+    return s;
+  }
+  function wifiEscape(s) { return s.replace(/([\\;,:"])/g, "\\$1"); }
+
+  function payload() {
+    switch (state.kind) {
+      case "link":
+        return normalizeUrl($("in-link").value);
+      case "instagram": {
+        var u = $("in-ig").value.trim();
+        var m = u.match(/instagram\.com\/([A-Za-z0-9._]+)/i);
+        if (m) u = m[1];
+        u = u.replace(/^@/, "").replace(/[^A-Za-z0-9._]/g, "");
+        return u ? "https://instagram.com/" + u : "";
+      }
+      case "whatsapp": {
+        var digits = $("in-wa-phone").value.replace(/\D/g, "").replace(/^00/, "");
+        if (!digits) return "";
+        var msg = $("in-wa-msg").value.trim();
+        return "https://wa.me/" + digits + (msg ? "?text=" + encodeURIComponent(msg) : "");
+      }
+      case "wifi": {
+        var ssid = $("in-wifi-ssid").value;
+        if (!ssid) return "";
+        var sec = $("in-wifi-sec").value;
+        var pass = $("in-wifi-pass").value;
+        var out = "WIFI:T:" + sec + ";S:" + wifiEscape(ssid) + ";";
+        if (sec !== "nopass") out += "P:" + wifiEscape(pass) + ";";
+        if ($("in-wifi-hidden").checked) out += "H:true;";
+        return out + ";";
+      }
+    }
+    return "";
+  }
+
+  /* ---------- Geometry: module matrix → list of shapes ---------- */
+
+  function makeMatrix(text, ecc) {
+    qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
+    var qr = qrcode(0, ecc);
+    qr.addData(text, "Byte");
+    qr.make();
+    var n = qr.getModuleCount();
+    var m = [];
+    for (var r = 0; r < n; r++) {
+      var row = [];
+      for (var c = 0; c < n; c++) row.push(qr.isDark(r, c));
+      m.push(row);
+    }
+    return m;
+  }
+
+  function inFinder(r, c, n) {
+    return (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
+  }
+
+  // Shapes are in module units, offset by the quiet zone.
+  function shapes(m, shape) {
+    var n = m.length, out = [], q = QUIET;
+    var eyeR = shape === "square" ? 0 : (shape === "dots" ? 2.2 : 1.6);
+    var eyeInnerR = shape === "square" ? 0 : (shape === "dots" ? 1.5 : 0.9);
+
+    // Finder patterns ("eyes"): 7×7 ring + 3×3 center, drawn whole so they scan reliably.
+    [[0, 0], [0, n - 7], [n - 7, 0]].forEach(function (p) {
+      var y = p[0] + q, x = p[1] + q;
+      out.push({ t: "ring", x: x, y: y, s: 7, w: 1, r: eyeR });
+      out.push({ t: "rect", x: x + 2, y: y + 2, w: 3, h: 3, r: eyeInnerR });
+    });
+
+    for (var r = 0; r < n; r++) {
+      if (shape === "square") {
+        // merge horizontal runs into one rect each for a compact, seam‑free output
+        var c = 0;
+        while (c < n) {
+          if (m[r][c] && !inFinder(r, c, n)) {
+            var start = c;
+            while (c < n && m[r][c] && !inFinder(r, c, n)) c++;
+            out.push({ t: "rect", x: start + q, y: r + q, w: c - start, h: 1, r: 0 });
+          } else c++;
+        }
+      } else {
+        for (var c2 = 0; c2 < n; c2++) {
+          if (!m[r][c2] || inFinder(r, c2, n)) continue;
+          if (shape === "dots") out.push({ t: "circle", cx: c2 + q + .5, cy: r + q + .5, r: .5 });
+          else out.push({ t: "rect", x: c2 + q + .06, y: r + q + .06, w: .88, h: .88, r: .32 });
+        }
+      }
+    }
+    return out;
+  }
+
+  function f(v) { return Math.round(v * 1000) / 1000; }
+
+  function rrPath(x, y, w, h, r) {
+    if (!r) return "M" + f(x) + " " + f(y) + "h" + f(w) + "v" + f(h) + "h" + f(-w) + "z";
+    r = Math.min(r, w / 2, h / 2);
+    return "M" + f(x + r) + " " + f(y) +
+      "h" + f(w - 2 * r) + "a" + f(r) + " " + f(r) + " 0 0 1 " + f(r) + " " + f(r) +
+      "v" + f(h - 2 * r) + "a" + f(r) + " " + f(r) + " 0 0 1 " + f(-r) + " " + f(r) +
+      "h" + f(-(w - 2 * r)) + "a" + f(r) + " " + f(r) + " 0 0 1 " + f(-r) + " " + f(-r) +
+      "v" + f(-(h - 2 * r)) + "a" + f(r) + " " + f(r) + " 0 0 1 " + f(r) + " " + f(-r) + "z";
+  }
+  function circlePath(cx, cy, r) {
+    return "M" + f(cx - r) + " " + f(cy) + "a" + f(r) + " " + f(r) + " 0 1 0 " + f(2 * r) + " 0" +
+      "a" + f(r) + " " + f(r) + " 0 1 0 " + f(-2 * r) + " 0z";
+  }
+
+  function toPath(list) {
+    var d = "";
+    list.forEach(function (s) {
+      if (s.t === "rect") d += rrPath(s.x, s.y, s.w, s.h, s.r);
+      else if (s.t === "circle") d += circlePath(s.cx, s.cy, s.r);
+      else if (s.t === "ring") {
+        d += rrPath(s.x, s.y, s.s, s.s, s.r);
+        var iw = s.s - 2 * s.w;
+        d += rrPath(s.x + s.w, s.y + s.w, iw, iw, Math.max(0, s.r - s.w * .6));
+      }
+    });
+    return d;
+  }
+
+  function buildSVG(m, opts) {
+    var dim = m.length + QUIET * 2;
+    var d = toPath(shapes(m, opts.shape));
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + dim + " " + dim + '"' +
+      (opts.px ? ' width="' + opts.px + '" height="' + opts.px + '"' : "") +
+      ' shape-rendering="' + (opts.shape === "square" ? "crispEdges" : "geometricPrecision") + '">' +
+      '<rect width="' + dim + '" height="' + dim + '" fill="' + opts.bg + '"/>' +
+      '<path fill="' + opts.fg + '" fill-rule="evenodd" d="' + d + '"/></svg>';
+  }
+
+  function drawCanvas(m, opts, px) {
+    var dim = m.length + QUIET * 2;
+    var cv = document.createElement("canvas");
+    cv.width = cv.height = px;
+    var ctx = cv.getContext("2d");
+    ctx.fillStyle = opts.bg;
+    ctx.fillRect(0, 0, px, px);
+    ctx.scale(px / dim, px / dim);
+    ctx.fillStyle = opts.fg;
+    ctx.fill(new Path2D(toPath(shapes(m, opts.shape))), "evenodd");
+    return cv;
+  }
+
+  /* ---------- Colour checks ---------- */
+
+  function lum(hex) {
+    var v = hex.replace("#", "");
+    if (v.length === 3) v = v.split("").map(function (ch) { return ch + ch; }).join("");
+    var rgb = [0, 2, 4].map(function (i) {
+      var c = parseInt(v.substr(i, 2), 16) / 255;
+      return c <= .03928 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4);
+    });
+    return .2126 * rgb[0] + .7152 * rgb[1] + .0722 * rgb[2];
+  }
+  function contrastNote() {
+    var lf = lum(state.fg), lb = lum(state.bg);
+    var ratio = (Math.max(lf, lb) + .05) / (Math.min(lf, lb) + .05);
+    if (lf > lb) return "The code is lighter than its background. Many phone cameras can't read light‑on‑dark codes. Swap the colors so the code is darker.";
+    if (ratio < 4) return "Low contrast (" + ratio.toFixed(1) + ":1). Some phones may struggle to scan this. Pick a darker code color or a lighter background.";
+    return "";
+  }
+
+  /* ---------- Render ---------- */
+
+  var current = { text: "", matrix: null };
+  var lastText = null;
+
+  function render() {
+    var text = payload();
+    $("encoded-text").textContent = text || "—";
+    $("proof-kind").textContent = KIND_LABEL[state.kind];
+
+    var note = contrastNote();
+    $("contrast-warn").textContent = note;
+    $("contrast-warn").hidden = !note;
+
+    var testable = /^https?:\/\//i.test(text);
+    $("btn-test").hidden = !testable;
+    if (testable) $("btn-test").href = text;
+
+    var empty = !text;
+    $("qr-empty").hidden = !empty;
+    ["btn-png", "btn-svg", "btn-copy"].forEach(function (id) { $(id).disabled = empty; });
+
+    if (empty) {
+      current = { text: "", matrix: null };
+      $("qr-img").removeAttribute("src");
+      $("proof-version").textContent = "Version —";
+      $("ruler-label").textContent = "— modules";
+      $("spec-grid").textContent = $("spec-ecc").textContent = $("spec-print").textContent = "—";
+      lastText = text;
+      return;
+    }
+
+    var m;
+    try { m = makeMatrix(text, state.ecc); }
+    catch (e) {
+      $("qr-empty").hidden = false;
+      $("qr-empty").innerHTML = "<div><strong>Too long for one code</strong>Shorten the text, or lower the damage tolerance.</div>";
+      return;
+    }
+    $("qr-empty").innerHTML = "<div><strong>Your code appears here</strong>Type a link on the left to make it.</div>";
+
+    current = { text: text, matrix: m };
+    var n = m.length, version = (n - 17) / 4;
+    var svg = buildSVG(m, { shape: state.shape, fg: state.fg, bg: state.bg });
+    var img = $("qr-img");
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    img.alt = "QR code for " + text;
+
+    $("proof-version").textContent = "Version " + version;
+    $("ruler-label").textContent = (n + QUIET * 2) + " modules";
+    $("spec-grid").textContent = n + "×" + n;
+    $("spec-ecc").textContent = state.ecc + " · " + ECC_LABEL[state.ecc];
+    // ~0.5 mm per module (incl. quiet zone) is a safe floor for phone cameras at close range
+    var mm = (n + QUIET * 2) * 0.5;
+    $("spec-print").textContent = mm >= 10 ? (mm / 10).toFixed(1) + " cm" : Math.ceil(mm) + " mm";
+
+    if (lastText !== null && lastText !== text) {
+      var fr = $("qr-frame");
+      fr.classList.remove("is-fresh"); void fr.offsetWidth; fr.classList.add("is-fresh");
+    }
+    lastText = text;
+  }
+
+  function syncRulerY() {
+    var fr = $("qr-frame");
+    $("ruler-y").style.height = fr.offsetHeight + "px";
+  }
+
+  /* ---------- Export ---------- */
+
+  function fileBase() {
+    var t = current.text.replace(/^https?:\/\/(www\.)?/i, "").replace(/^WIFI:.*S:([^;]*).*/, "wifi-$1");
+    return ("qr-" + t).replace(/[^A-Za-z0-9._-]+/g, "-").replace(/-+/g, "-").replace(/-$/, "").slice(0, 60);
+  }
+  function save(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+  function pngBlob(cb) {
+    drawCanvas(current.matrix, state, state.size).toBlob(cb, "image/png");
+  }
+
+  $("btn-png").addEventListener("click", function () {
+    if (!current.matrix) return;
+    pngBlob(function (b) { save(b, fileBase() + ".png"); toast("PNG saved · " + state.size + " px"); });
+  });
+  $("btn-svg").addEventListener("click", function () {
+    if (!current.matrix) return;
+    var svg = buildSVG(current.matrix, { shape: state.shape, fg: state.fg, bg: state.bg, px: 1024 });
+    save(new Blob([svg], { type: "image/svg+xml" }), fileBase() + ".svg");
+    toast("SVG saved");
+  });
+  $("btn-copy").addEventListener("click", function () {
+    if (!current.matrix) return;
+    if (!navigator.clipboard || typeof ClipboardItem === "undefined") {
+      toast("Your browser can't copy images. Use Download instead.");
+      return;
+    }
+    var p = new Promise(function (res) { pngBlob(res); });
+    navigator.clipboard.write([new ClipboardItem({ "image/png": p })])
+      .then(function () { toast("Copied. Paste it anywhere."); })
+      .catch(function () { toast("Couldn't copy here. Use Download instead."); });
+  });
+
+  var tt;
+  function toast(msg) {
+    var el = $("toast");
+    el.textContent = msg; el.classList.add("show");
+    clearTimeout(tt); tt = setTimeout(function () { el.classList.remove("show"); }, 2200);
+  }
+
+  /* ---------- Controls ---------- */
+
+  document.querySelectorAll(".tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      state.kind = tab.dataset.kind;
+      document.querySelectorAll(".tab").forEach(function (t) {
+        var on = t === tab;
+        t.setAttribute("aria-selected", on);
+        $(t.getAttribute("aria-controls")).hidden = !on;
+      });
+      var first = $("pane-" + state.kind).querySelector("input");
+      if (first) first.focus({ preventScroll: true });
+      render();
+    });
+  });
+
+  ["in-link", "in-ig", "in-wa-phone", "in-wa-msg", "in-wifi-ssid", "in-wifi-pass", "in-wifi-sec", "in-wifi-hidden"]
+    .forEach(function (id) {
+      $(id).addEventListener("input", render);
+      $(id).addEventListener("change", render);
+    });
+
+  function segment(id, key) {
+    var group = $(id);
+    function sync() {
+      group.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.v === state[key]); });
+    }
+    group.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      state[key] = b.dataset.v; sync(); persist(); render();
+    });
+    sync();
+  }
+  segment("seg-shape", "shape");
+  segment("seg-ecc", "ecc");
+
+  function swatches(id, list, key, label) {
+    var host = $(id);
+    list.forEach(function (hex) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "swatch"; b.style.background = hex;
+      b.dataset.v = hex; b.setAttribute("aria-label", label + " " + hex);
+      host.appendChild(b);
+    });
+    var wrap = document.createElement("label");
+    wrap.className = "color-custom";
+    var inp = document.createElement("input");
+    inp.type = "color"; inp.id = id + "-custom"; inp.setAttribute("aria-label", "Custom " + label.toLowerCase());
+    var txt = document.createElement("span");
+    wrap.appendChild(inp); wrap.appendChild(txt);
+    host.appendChild(wrap);
+
+    function sync() {
+      var val = state[key].toUpperCase();
+      host.querySelectorAll(".swatch").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.v.toUpperCase() === val); });
+      inp.value = state[key].length === 7 ? state[key] : "#000000";
+      txt.textContent = val;
+    }
+    host.addEventListener("click", function (e) {
+      var b = e.target.closest(".swatch"); if (!b) return;
+      state[key] = b.dataset.v; sync(); persist(); render();
+    });
+    inp.addEventListener("input", function () { state[key] = inp.value; sync(); persist(); render(); });
+    sync();
+  }
+  swatches("sw-fg", FG, "fg", "Code color");
+  swatches("sw-bg", BG, "bg", "Background");
+
+  var sel = $("sel-size");
+  sel.value = String(state.size);
+  if (!sel.value) { sel.value = "1024"; state.size = 1024; }
+  sel.addEventListener("change", function () { state.size = parseInt(sel.value, 10); persist(); });
+
+  if (typeof qrcode === "undefined") {
+    $("qr-empty").hidden = false;
+    $("qr-empty").innerHTML = "<div><strong>QR engine didn't load</strong>Check your internet connection and reload the page.</div>";
+    return;
+  }
+
+  render();
+  syncRulerY();
+  window.addEventListener("resize", syncRulerY);
+  if ("ResizeObserver" in window) new ResizeObserver(syncRulerY).observe($("qr-frame"));
+})();
+</script>
+</body>
+</html>
