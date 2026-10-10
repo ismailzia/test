@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sara Benali · Studio Atlas</title>
+<meta name="description" content="Contact card for Sara Benali, Interior Designer at Studio Atlas.">
+<meta property="og:title" content="Sara Benali · Studio Atlas">
+<meta property="og:description" content="Tap to save my contact, call, or message me on WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one phone-width column — the card face (85×55 mm proportions) on top, then Save contact, then one row per way to reach the person. */
+:root {
+  --page: #EEF1EF;
+  --surface: #FFFFFF;
+  --ink: #17201E;
+  --muted: #5E6A67;
+  --line: #DCE2DF;
+  --brand: #0F5C5A;          /* overwritten by CARD.color */
+  --brand-ink: #FFFFFF;
+  --brand-soft: color-mix(in srgb, var(--brand) 10%, transparent);
+  --brand-fg: var(--brand);  /* brand color used as text/icons on the page */
+  --shadow: 0 1px 0 rgba(23, 32, 30, .04), 0 18px 40px -18px rgba(23, 32, 30, .35);
+
+  --font-display: "Gloock", "Iowan Old Style", Georgia, serif;
+  --font-body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0F1312;
+    --surface: #181E1C;
+    --ink: #E8EDEB;
+    --muted: #9AA6A2;
+    --line: #2A3330;
+    --brand-soft: color-mix(in srgb, var(--brand) 22%, transparent);
+    --brand-fg: color-mix(in srgb, var(--brand) 50%, #fff);
+    --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 18px 40px -18px rgba(0, 0, 0, .8);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0F1312;
+  --surface: #181E1C;
+  --ink: #E8EDEB;
+  --muted: #9AA6A2;
+  --line: #2A3330;
+  --brand-soft: color-mix(in srgb, var(--brand) 22%, transparent);
+  --brand-fg: color-mix(in srgb, var(--brand) 50%, #fff);
+  --shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 18px 40px -18px rgba(0, 0, 0, .8);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 400 16px/1.5 var(--font-body);
+  padding-inline: 16px;
+  padding-block: max(24px, env(safe-area-inset-top, 0px)) max(32px, env(safe-area-inset-bottom, 0px));
+}
+[hidden] { display: none !important; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--brand-fg); outline-offset: 3px; }
+
+.wrap { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+/* Card face */
+.face {
+  position: relative;
+  aspect-ratio: 85 / 55; max-width: 100%;
+  border-radius: 16px;
+  padding: 22px 22px 20px;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(255,255,255,.16), transparent 55%),
+    linear-gradient(160deg, color-mix(in srgb, var(--brand) 88%, #fff) 0%, var(--brand) 55%, color-mix(in srgb, var(--brand) 80%, #000) 100%);
+  color: var(--brand-ink);
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column; justify-content: space-between;
+  overflow: hidden;
+  animation: rise .5s cubic-bezier(.2,.7,.2,1) both;
+}
+.face::after { /* fine paper grain */
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .07;
+  background-image: repeating-linear-gradient(115deg, #fff 0 1px, transparent 1px 4px);
+}
+.face-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.avatar {
+  width: 64px; height: 64px; border-radius: 50%; flex: none;
+  display: grid; place-items: center; overflow: hidden;
+  background: rgba(255,255,255,.16);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.55);
+  font: 400 26px/1 var(--font-display); letter-spacing: .02em;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tap {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 600 11px/1 var(--font-body); letter-spacing: .12em; text-transform: uppercase; opacity: .8;
+}
+.tap svg { width: 18px; height: 18px; }
+.face h1 {
+  margin: 0;
+  font: 400 clamp(26px, 8.4vw, 34px)/1.05 var(--font-display);
+  letter-spacing: -.005em;
+  text-wrap: balance;
+}
+.face .role { margin: 6px 0 0; font-size: 14px; font-weight: 500; opacity: .88; }
+@keyframes rise { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .face { animation: none; } }
+
+.bio { margin: 0; color: var(--muted); font-size: 15px; padding-inline: 4px; }
+
+/* Primary actions */
+.primary { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 52px; padding: 0 20px; border-radius: 12px; cursor: pointer;
+  font-weight: 700; font-size: 16px; text-decoration: none;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  transition: transform .1s, background .15s;
+}
+.btn:active { transform: scale(.98); }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.btn-save { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.btn-save:hover { background: color-mix(in srgb, var(--brand) 88%, #000); }
+.btn-icon { width: 52px; padding: 0; }
+
+/* Contact rows */
+.links {
+  list-style: none; margin: 0; padding: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  overflow: hidden;
+}
+.links li + li { border-top: 1px solid var(--line); }
+.links a {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) 16px; align-items: center; gap: 14px;
+  padding: 14px 16px; text-decoration: none;
+  transition: background .15s;
+}
+.links a:hover { background: var(--brand-soft); }
+.ico {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: grid; place-items: center;
+  background: var(--brand-soft); color: var(--brand-fg);
+}
+.ico svg { width: 20px; height: 20px; }
+.txt { min-width: 0; display: flex; flex-direction: column; }
+.txt b { font-weight: 600; font-size: 15px; }
+.txt span { color: var(--muted); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chev { color: var(--muted); width: 16px; height: 16px; }
+
+/* QR panel */
+.qr-toggle { background: none; border: 0; padding: 6px; margin: 0 auto; color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.qr-toggle svg { width: 18px; height: 18px; }
+.qr-panel {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
+}
+.qr-panel img { width: min(240px, 100%); aspect-ratio: 1; image-rendering: pixelated; background: #fff; border-radius: 8px; }
+.qr-panel p { margin: 0; color: var(--muted); font-size: 14px; }
+
+footer { text-align: center; color: var(--muted); font-size: 12px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 16px); opacity: 0; pointer-events: none;
+  background: var(--ink); color: var(--surface);
+  padding: 10px 16px; border-radius: 999px; font-weight: 600; font-size: 14px;
+  transition: opacity .2s, transform .2s; max-width: calc(100% - 32px); text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="face" aria-label="Business card">
+    <div class="face-top">
+      <div class="avatar" id="avatar" aria-hidden="true"></div>
+      <span class="tap" title="This card also works by tapping an NFC card to a phone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8.5 7.5a6 6 0 0 1 0 9M12 5a9.5 9.5 0 0 1 0 14M15.5 2.5a13 13 0 0 1 0 19M5 10a2.5 2.5 0 0 1 0 4"/></svg>
+        Contact
+      </span>
+    </div>
+    <div>
+      <h1 id="name"></h1>
+      <p class="role" id="role"></p>
+    </div>
+  </section>
+
+  <p class="bio" id="bio"></p>
+
+  <div class="primary">
+    <button class="btn btn-save" id="btn-save" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M3 20c.8-3.5 3.6-5.5 7-5.5 1.3 0 2.5.3 3.5.8M19 14v6M16 17h6"/></svg>
+      Save contact
+    </button>
+    <button class="btn btn-icon" id="btn-share" type="button" aria-label="Share this card">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+    </button>
+  </div>
+
+  <ul class="links" id="links"></ul>
+
+  <button class="qr-toggle" id="qr-toggle" type="button" aria-expanded="false" aria-controls="qr-panel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg>
+    Show QR code to share
+  </button>
+  <div class="qr-panel" id="qr-panel" hidden>
+    <img id="qr-img" alt="QR code for this contact page">
+    <p>Let someone scan this from your screen to open this page.</p>
+  </div>
+
+  <footer id="footer"></footer>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   EDIT THIS: everything shown on the page comes from CARD.
+   Leave a field as "" to hide it.
+   ============================================================ */
+var CARD = {
+  first: "Sara",
+  last: "Benali",
+  title: "Interior Designer",
+  org: "Studio Atlas",
+  bio: "I design calm, practical homes and small shops. Message me on WhatsApp for a free first consultation.",
+  photo: "",                       // e.g. "sara.jpg" placed next to this file; empty = initials
+  color: "#0F5C5A",                // card color
+
+  phone: "+1 555 010 0123",
+  whatsapp: "+1 555 010 0123",
+  email: "sara@example.com",
+  website: "https://example.com",
+  address: "12 Example Street, Your City",
+  mapsUrl: "",                     // optional Google Maps link; built from address if empty
+
+  instagram: "yourhandle",
+  tiktok: "",
+  linkedin: "",                    // full profile URL
+  facebook: "",                    // full page URL
+
+  pageUrl: ""                      // the public address of this page, for the QR code; empty = current address
+};
+</script>
+<script src="../qrcode.js"></script>
+<script src="../vcard.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var C = CARD;
+  var fullName = [C.first, C.last].filter(Boolean).join(" ");
+
+  document.documentElement.style.setProperty("--brand", C.color || "#0F5C5A");
+
+  /* Face */
+  $("name").textContent = fullName;
+  $("role").textContent = [C.title, C.org].filter(Boolean).join(" · ");
+  $("bio").textContent = C.bio || "";
+  $("bio").hidden = !C.bio;
+  if (C.photo) {
+    var img = new Image(); img.src = C.photo; img.alt = "";
+    $("avatar").appendChild(img);
+  } else {
+    $("avatar").textContent = ((C.first || " ")[0] + (C.last || " ")[0]).trim().toUpperCase();
+  }
+  $("footer").textContent = (C.org || fullName) + " · " + new Date().getFullYear();
+
+  /* Contact rows */
+  var ICONS = {
+    phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
+    whatsapp: '<path d="M3.5 20.5l1.3-4.2A8.5 8.5 0 1 1 8 19.4z"/><path d="M9 8.5c0 3.5 3 6.5 6.5 6.5l1-1.5-2-1-1 .8a4.5 4.5 0 0 1-2.3-2.3l.8-1-1-2z"/>',
+    email: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+    website: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+    instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6" fill="currentColor"/>',
+    tiktok: '<path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 3c.5 2.5 2.3 4.2 5 4.5"/>',
+    linkedin: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/>',
+    facebook: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M15 8h-1.5A1.5 1.5 0 0 0 12 9.5V21M9.5 13H15"/>',
+    address: '<path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>'
+  };
+  function digits(s) { return (s || "").replace(/\D/g, "").replace(/^00/, ""); }
+  function handle(s) { return (s || "").replace(/^@/, "").trim(); }
+  function bare(u) { return (u || "").replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, ""); }
+
+  var rows = [
+    C.phone && { k: "phone", label: "Call", value: C.phone, href: "tel:" + C.phone.replace(/[^\d+]/g, "") },
+    C.whatsapp && { k: "whatsapp", label: "WhatsApp", value: "Send a message", href: "https://wa.me/" + digits(C.whatsapp) },
+    C.email && { k: "email", label: "Email", value: C.email, href: "mailto:" + C.email },
+    C.website && { k: "website", label: "Website", value: bare(C.website), href: C.website },
+    C.instagram && { k: "instagram", label: "Instagram", value: "@" + handle(C.instagram), href: "https://instagram.com/" + handle(C.instagram) },
+    C.tiktok && { k: "tiktok", label: "TikTok", value: "@" + handle(C.tiktok), href: "https://www.tiktok.com/@" + handle(C.tiktok) },
+    C.linkedin && { k: "linkedin", label: "LinkedIn", value: bare(C.linkedin), href: C.linkedin },
+    C.facebook && { k: "facebook", label: "Facebook", value: bare(C.facebook), href: C.facebook },
+    C.address && { k: "address", label: "Find us", value: C.address, href: C.mapsUrl || "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(C.address) }
+  ].filter(Boolean);
+
+  var chev = '<svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg>';
+  $("links").innerHTML = rows.map(function (r) {
+    var ext = /^https?:/.test(r.href) ? ' target="_blank" rel="noopener"' : "";
+    return '<li><a href="' + r.href.replace(/"/g, "&quot;") + '"' + ext + '>' +
+      '<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[r.k] + '</svg></span>' +
+      '<span class="txt"><b></b><span></span></span>' + chev + '</a></li>';
+  }).join("");
+  // fill text safely (no HTML injection from CARD values)
+  $("links").querySelectorAll("li").forEach(function (li, i) {
+    li.querySelector("b").textContent = rows[i].label;
+    li.querySelector(".txt span").textContent = rows[i].value;
+  });
+
+  /* Save contact (.vcf) */
+  function pageUrl() { return C.pageUrl || location.href.split("#")[0]; }
+  function photoBase64() {
+    if (!C.photo || location.protocol === "file:") return Promise.resolve(null);
+    return fetch(C.photo).then(function (r) { return r.ok ? r.blob() : null; }).then(function (b) {
+      if (!b) return null;
+      return new Promise(function (res) {
+        var fr = new FileReader();
+        fr.onload = function () { res({ type: /png/.test(b.type) ? "PNG" : "JPEG", base64: String(fr.result).split(",")[1] }); };
+        fr.onerror = function () { res(null); };
+        fr.readAsDataURL(b);
+      });
+    }).catch(function () { return null; });
+  }
+  $("btn-save").addEventListener("click", function () {
+    photoBase64().then(function (photo) {
+      var vcf = buildVCard({
+        first: C.first, last: C.last, org: C.org, title: C.title,
+        phone: C.phone, whatsapp: C.whatsapp, email: C.email, url: C.website,
+        address: C.address, note: C.bio, photo: photo,
+        links: [
+          C.instagram && { label: "Instagram", url: "https://instagram.com/" + handle(C.instagram) },
+          C.tiktok && { label: "TikTok", url: "https://www.tiktok.com/@" + handle(C.tiktok) },
+          C.linkedin && { label: "LinkedIn", url: C.linkedin },
+          C.facebook && { label: "Facebook", url: C.facebook },
+          /^https?:/.test(pageUrl()) && { label: "Card", url: pageUrl() }
+        ].filter(Boolean)
+      });
+      var blob = new Blob([vcf], { type: "text/vcard;charset=utf-8" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = (fullName || "contact").replace(/[^\w.-]+/g, "-") + ".vcf";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      toast("Contact file downloaded. Open it to add " + (C.first || "the contact") + ".");
+    });
+  });
+
+  /* Share */
+  $("btn-share").addEventListener("click", function () {
+    var data = { title: fullName, text: [C.title, C.org].filter(Boolean).join(" · "), url: pageUrl() };
+    if (navigator.share) { navigator.share(data).catch(function () {}); return; }
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(pageUrl()).then(function () { toast("Link copied"); }, function () { toast(pageUrl()); });
+    } else toast(pageUrl());
+  });
+
+  /* QR of this page */
+  $("qr-toggle").addEventListener("click", function () {
+    var open = $("qr-panel").hidden;
+    $("qr-panel").hidden = !open;
+    this.setAttribute("aria-expanded", open);
+    if (open && !$("qr-img").src && typeof qrcode !== "undefined") {
+      qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
+      var qr = qrcode(0, "M"); qr.addData(pageUrl(), "Byte"); qr.make();
+      $("qr-img").src = qr.createDataURL(8, 16);
+    }
+  });
+
+  var tt;
+  function toast(msg) {
+    var el = $("toast"); el.textContent = msg; el.classList.add("show");
+    clearTimeout(tt); tt = setTimeout(function () { el.classList.remove("show"); }, 2600);
+  }
+})();
+</script>
+</body>
+</html>

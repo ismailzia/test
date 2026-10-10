@@ -152,7 +152,7 @@ button, input, select { font: inherit; color: inherit; }
 }
 
 /* Tabs */
-.tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; background: var(--mat); border-radius: var(--r-sm); }
+.tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 4px; background: var(--mat); border-radius: var(--r-sm); }
 .tab {
   flex: 1 1 auto;
   border: 0; background: transparent; cursor: pointer;
@@ -199,6 +199,7 @@ label, .label { font-weight: 600; font-size: 13px; }
 .encoded .label { font: 600 11px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .encoded code {
   font: 400 13px/1.5 var(--font-mono);
+  white-space: pre-wrap;
   overflow-wrap: anywhere; word-break: break-word;
   color: var(--ink);
 }
@@ -287,7 +288,7 @@ label, .label { font-weight: 600; font-size: 13px; }
 .qr-frame img { image-rendering: pixelated; -webkit-touch-callout: default; }
 .qr-frame.is-fresh { animation: pop .28s ease-out; }
 @keyframes pop { from { transform: scale(.985); opacity: .6; } to { transform: none; opacity: 1; } }
-@media (max-width: 380px) { .tab { font-size: 13px; } }
+@media (max-width: 560px) { .tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); } .tab { grid-column: span 2; } .tab:nth-child(n+4) { grid-column: span 3; } }
 @media (prefers-reduced-motion: reduce) { .qr-frame.is-fresh { animation: none; } * { transition: none !important; } }
 
 .qr-empty {
@@ -371,6 +372,7 @@ footer a { color: inherit; }
         <button class="tab" role="tab" id="tab-instagram" aria-controls="pane-instagram" aria-selected="false" data-kind="instagram">Instagram</button>
         <button class="tab" role="tab" id="tab-whatsapp" aria-controls="pane-whatsapp" aria-selected="false" data-kind="whatsapp">WhatsApp</button>
         <button class="tab" role="tab" id="tab-wifi" aria-controls="pane-wifi" aria-selected="false" data-kind="wifi">Wi‑Fi</button>
+        <button class="tab" role="tab" id="tab-contact" aria-controls="pane-contact" aria-selected="false" data-kind="contact">Contact</button>
       </div>
 
       <div class="fields" id="pane-link" role="tabpanel" aria-labelledby="tab-link">
@@ -428,6 +430,44 @@ footer a { color: inherit; }
           </div>
         </div>
         <span class="hint">Guests point their camera at the code and join without typing the password.</span>
+      </div>
+
+      <div class="fields" id="pane-contact" role="tabpanel" aria-labelledby="tab-contact" hidden>
+        <div class="field-row">
+          <div class="field">
+            <label for="in-vc-first">First name</label>
+            <input class="input" id="in-vc-first" type="text" autocomplete="given-name" value="Sara">
+          </div>
+          <div class="field">
+            <label for="in-vc-last">Last name</label>
+            <input class="input" id="in-vc-last" type="text" autocomplete="family-name" value="Benali">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="in-vc-phone">Phone</label>
+            <input class="input" id="in-vc-phone" type="tel" inputmode="tel" autocomplete="tel" value="+1 555 010 0123">
+          </div>
+          <div class="field">
+            <label for="in-vc-email">Email</label>
+            <input class="input" id="in-vc-email" type="email" autocomplete="email" spellcheck="false" value="sara@example.com">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="in-vc-org">Company</label>
+            <input class="input" id="in-vc-org" type="text" autocomplete="organization" value="Studio Atlas">
+          </div>
+          <div class="field">
+            <label for="in-vc-title">Job title</label>
+            <input class="input" id="in-vc-title" type="text" autocomplete="organization-title" value="Interior Designer">
+          </div>
+        </div>
+        <div class="field">
+          <label for="in-vc-url">Website <span class="hint">(optional)</span></label>
+          <input class="input" id="in-vc-url" type="text" inputmode="url" spellcheck="false" value="example.com">
+        </div>
+        <span class="hint">Scanning opens “Add contact” on the phone with everything filled in. Each field makes the code denser, so leave out what you don't need. For a photo and social buttons, use a contact page link instead.</span>
       </div>
 
       <div class="encoded" aria-live="polite">
@@ -539,6 +579,7 @@ footer a { color: inherit; }
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="qrcode.js"></script>
+<script src="vcard.js"></script>
 <script>
 (function () {
   "use strict";
@@ -546,7 +587,7 @@ footer a { color: inherit; }
   var $ = function (id) { return document.getElementById(id); };
   var QUIET = 4; // quiet zone, in modules (the QR spec asks for 4)
   var ECC_LABEL = { L: "7%", M: "15%", Q: "25%", H: "30%" };
-  var KIND_LABEL = { link: "Link", instagram: "Instagram", whatsapp: "WhatsApp", wifi: "Wi‑Fi" };
+  var KIND_LABEL = { link: "Link", instagram: "Instagram", whatsapp: "WhatsApp", wifi: "Wi‑Fi", contact: "Contact" };
 
   var FG = ["#111111", "#2440E6", "#0B6E4F", "#B3261E", "#6B2FB3", "#7A4A12"];
   var BG = ["#FFFFFF", "#F6F1E7", "#E9F2FF", "#FFF4D6", "#EAF6EE"];
@@ -607,6 +648,15 @@ footer a { color: inherit; }
         if (sec !== "nopass") out += "P:" + wifiEscape(pass) + ";";
         if ($("in-wifi-hidden").checked) out += "H:true;";
         return out + ";";
+      }
+      case "contact": {
+        var url = $("in-vc-url").value.trim();
+        return buildVCard({
+          first: $("in-vc-first").value, last: $("in-vc-last").value,
+          phone: $("in-vc-phone").value, email: $("in-vc-email").value,
+          org: $("in-vc-org").value, title: $("in-vc-title").value,
+          url: url ? normalizeUrl(url) : ""
+        }, { fold: false });
       }
     }
     return "";
@@ -811,7 +861,7 @@ footer a { color: inherit; }
   /* ---------- Export ---------- */
 
   function fileBase() {
-    var t = current.text.replace(/^https?:\/\/(www\.)?/i, "").replace(/^WIFI:.*S:([^;]*).*/, "wifi-$1");
+    var t = current.text.replace(/^https?:\/\/(www\.)?/i, "").replace(/^WIFI:.*S:([^;]*).*/, "wifi-$1").replace(/^BEGIN:VCARD[\s\S]*?FN:([^\r\n]*)[\s\S]*/, "contact-$1");
     return ("qr-" + t).replace(/[^A-Za-z0-9._-]+/g, "-").replace(/-+/g, "-").replace(/-$/, "").slice(0, 60);
   }
   function save(blob, name) {
@@ -870,7 +920,8 @@ footer a { color: inherit; }
     });
   });
 
-  ["in-link", "in-ig", "in-wa-phone", "in-wa-msg", "in-wifi-ssid", "in-wifi-pass", "in-wifi-sec", "in-wifi-hidden"]
+  ["in-link", "in-ig", "in-wa-phone", "in-wa-msg", "in-wifi-ssid", "in-wifi-pass", "in-wifi-sec", "in-wifi-hidden",
+   "in-vc-first", "in-vc-last", "in-vc-phone", "in-vc-email", "in-vc-org", "in-vc-title", "in-vc-url"]
     .forEach(function (id) {
       $(id).addEventListener("input", render);
       $(id).addEventListener("change", render);
